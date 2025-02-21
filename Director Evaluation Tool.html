@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Director Evaluation Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 1000px;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      vertical-align: top;
+    }
+    th {
+      background-color: #f7f7f7;
+    }
+    select, textarea, input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .section-title {
+      padding: 6px 10px;
+      margin-top: 40px;
+      font-size: 1.2em;
+      border-left: 4px solid #555;
+    }
+    .generate-button {
+      display: block;
+      margin: 0 auto;
+      padding: 10px 20px;
+      font-size: 1.1em;
+      cursor: pointer;
+    }
+    .instructions {
+      font-style: italic;
+      margin-bottom: 10px;
+      color: #666;
+    }
+    .input-row {
+      margin-bottom: 10px;
+    }
+    .input-row label {
+      display: inline-block;
+      width: 100px;
+      font-weight: bold;
+    }
+    .section-title:nth-of-type(1) {
+      background-color: #f8bbd0; /* Light Pink */
+    }
+    .section-title:nth-of-type(2) {
+      background-color: #e1bee7; /* Lavender */
+    }
+    .section-title:nth-of-type(3) {
+      background-color: #d1c4e9; /* Light Purple */
+    }
+    .section-title:nth-of-type(4) {
+      background-color: #c5cae9; /* Light Blue */
+    }
+    .section-title:nth-of-type(5) {
+      background-color: #b3e5fc; /* Light Cyan */
+    }
+    .section-title:nth-of-type(6) {
+      background-color: #b2dfdb; /* Light Teal */
+    }
+  </style>
+</head>
+<body>
+
+<h1>Director Evaluation Tool</h1>
+<p class="instructions">
+  Fill in the Director Name and School below, then complete each section. Select a rating and add optional comments/evidence. When done, click "Generate CSV" at the bottom to download your file.
+</p>
+
+<!-- Top form fields for Director Name and School -->
+<div class="input-row">
+  <label for="directorName">Director Name:</label>
+  <input type="text" id="directorName" placeholder="e.g., Jane Doe">
+</div>
+<div class="input-row">
+  <label for="schoolName">School:</label>
+  <input type="text" id="schoolName" placeholder="e.g., Lincoln Elementary">
+</div>
+
+<!-- Container for all sections -->
+<div id="evaluation-form"></div>
+
+<!-- Button to generate CSV -->
+<button class="generate-button" onclick="generateCSV()">Generate CSV</button>
+
+<script>
+// Here is the data structure that defines each category, its performance indicators,
+// and some default behavioral descriptors. We'll build the form dynamically.
+
+const evaluationData = [
+  {
+    category: "General Work Habits",
+    items: [
+      {
+        indicator: "Clocks in and out on time",
+        descriptor: "Consistently arrives/departs as scheduled; respects timekeeping policies."
+      },
+      {
+        indicator: "Reliable attendance",
+        descriptor: "Follows attendance policy; rarely absent/tardy without valid reason."
+      },
+      {
+        indicator: "Weekly plans created",
+        descriptor: "Prepares comprehensive weekly plans aligned with program objectives; submits on time."
+      },
+      {
+        indicator: "Weekly plans implemented",
+        descriptor: "Follows through on planned activities; adapts as needed based on child engagement and feedback."
+      },
+      {
+        indicator: "Practices safety in job duties",
+        descriptor: "Observes safety standards; proactively mitigates hazards in the workplace."
+      },
+      {
+        indicator: "Flexible with assignments & schedule",
+        descriptor: "Adapts to changes calmly; open to handling new tasks or adjusted timetables."
+      },
+      {
+        indicator: "Maintains a positive attitude",
+        descriptor: "Demonstrates enthusiasm; maintains encouraging tone even under pressure."
+      },
+      {
+        indicator: "Gives ample notice for absence",
+        descriptor: "Communicates planned absences in advance; follows procedure for sick or emergency leave."
+      },
+      {
+        indicator: "CCAP tracking",
+        descriptor: "Accurately completes required Child Care Assistance Program (CCAP) paperwork/forms on schedule."
+      },
+      {
+        indicator: "Remains calm in tense situations",
+        descriptor: "Uses de-escalation strategies; stays solution-focused during conflicts or emergencies."
+      },
+      {
+        indicator: "Cleans floors, tables, and spaces daily",
+        descriptor: "Ensures areas are hygienic and inviting; follows proper sanitation protocols."
+      },
+      {
+        indicator: "Organizes cabinets & materials",
+        descriptor: "Maintains orderly, labeled storage; ensures items are easy to locate and restock."
+      }
+    ]
+  },
+  {
+    category: "Communication & Teamwork",
+    items: [
+      {
+        indicator: "Communication with office/school staff",
+        descriptor: "Maintains consistent contact; shares updates or concerns promptly; responds to requests efficiently."
+      },
+      {
+        indicator: "Communicates effectively with colleagues & management",
+        descriptor: "Uses professional tone; provides timely, clear information; listens actively to instructions/feedback."
+      },
+      {
+        indicator: "Demonstrates teamwork & shares duties fairly",
+        descriptor: "Collaborates on tasks; balances workload; helps others when needed without micromanaging."
+      },
+      {
+        indicator: "Shares ideas & materials",
+        descriptor: "Contributes useful resources or strategies to the team; encourages innovation."
+      },
+      {
+        indicator: "Communicates directly, avoids gossip",
+        descriptor: "Addresses conflicts calmly, in person, and respectfully; refrains from negative talk behind others’ backs."
+      },
+      {
+        indicator: "Approaches feedback with a learning attitude",
+        descriptor: "Receives suggestions openly; implements changes or asks for clarity when needed."
+      },
+      {
+        indicator: "Models service to others",
+        descriptor: "Goes the extra mile to support team members; shows empathy and respect in daily interactions."
+      },
+      {
+        indicator: "Solves conflict with colleagues maturely",
+        descriptor: "Seeks win-win resolutions; remains professional, calm, and solution-oriented."
+      }
+    ]
+  },
+  {
+    category: "Child Engagement & Interaction",
+    items: [
+      {
+        indicator: "Friendly and caring toward kids",
+        descriptor: "Greets children warmly; supports emotional needs and encourages positive relationships."
+      },
+      {
+        indicator: "Eye-to-eye interaction",
+        descriptor: "Communicates at children’s level; maintains comfortable eye contact when giving instructions or listening."
+      },
+      {
+        indicator: "Uses appropriate voice",
+        descriptor: "Adjusts tone/volume to context; avoids yelling or harsh language."
+      },
+      {
+        indicator: "Shows respect for individual differences",
+        descriptor: "Considers each child’s background, personality, and developmental level in interactions."
+      },
+      {
+        indicator: "Demonstrates knowledge of children’s development",
+        descriptor: "Plans and adapts activities according to age/stage; addresses diverse learning needs."
+      },
+      {
+        indicator: "Teaches independence & self-help",
+        descriptor: "Encourages children to try tasks on their own; gives guidance to build life skills."
+      },
+      {
+        indicator: "Avoids stereotyping/labeling of kids/families",
+        descriptor: "Refrains from biased language or assumptions; focuses on individual abilities and potential."
+      },
+      {
+        indicator: "Reinforces positive behavior",
+        descriptor: "Uses praise, recognition, or incentives to acknowledge appropriate conduct; focuses on strengths."
+      },
+      {
+        indicator: "Regularly records observations of children",
+        descriptor: "Documents behavioral or developmental notes; uses them to inform planning or parent communication."
+      },
+      {
+        indicator: "Teaches kids to care for materials & supplies",
+        descriptor: "Fosters responsibility for shared resources; guides children to clean up and handle items properly."
+      }
+    ]
+  },
+  {
+    category: "Family & Community Engagement",
+    items: [
+      {
+        indicator: "Purposely engages with parents",
+        descriptor: "Greets families upon arrival/departure; encourages dialogue and input on children’s experiences."
+      },
+      {
+        indicator: "Listens & responds well to parents",
+        descriptor: "Demonstrates active listening; addresses concerns promptly and tactfully."
+      },
+      {
+        indicator: "Effectively communicates realistic information",
+        descriptor: "Provides factual, concise updates about child’s progress or incidents; avoids oversimplifying or sugarcoating."
+      },
+      {
+        indicator: "Shows respect for diverse backgrounds",
+        descriptor: "Welcomes families from all cultures; uses inclusive language; acknowledges various family structures."
+      },
+      {
+        indicator: "Maintains confidentiality",
+        descriptor: "Protects sensitive child/family info; follows data privacy and program protocols."
+      },
+      {
+        indicator: "Seeks a partnership with parents",
+        descriptor: "Invites parent collaboration; values their insights on children’s needs, interests, or challenges."
+      },
+      {
+        indicator: "Regularly shares information about child’s progress",
+        descriptor: "Keeps parents updated on milestones, challenges, or achievements; documents specifics when possible."
+      },
+      {
+        indicator: "Communicates upcoming events / news",
+        descriptor: "Uses newsletters, emails, or personal reminders about scheduled activities, changes, or deadlines."
+      },
+      {
+        indicator: "Quality of newsletter content",
+        descriptor: "Provides clear, detailed site updates (activities, schedules, special events) that are relevant and engaging."
+      },
+      {
+        indicator: "Communicates effectively to parents on site",
+        descriptor: "Offers reminders, event updates, or announcements in a timely manner; ensures parents feel well-informed."
+      }
+    ]
+  },
+  {
+    category: "Program Management",
+    items: [
+      {
+        indicator: "Creates an inviting learning environment",
+        descriptor: "Sets up engaging, age-appropriate spaces; uses décor and layout to spark curiosity and comfort."
+      },
+      {
+        indicator: "Maintains a safe environment",
+        descriptor: "Checks for hazards; ensures equipment is in good repair; follows safety procedures consistently."
+      },
+      {
+        indicator: "Provides age-appropriate activities",
+        descriptor: "Implements variety-rich curriculum suited to children’s developmental stages."
+      },
+      {
+        indicator: "Incorporates movement, mindfulness, and nutrition",
+        descriptor: "Integrates physical activities, relaxation techniques, and healthy eating lessons into the routine."
+      },
+      {
+        indicator: "Serves as an appropriate role model",
+        descriptor: "Exhibits courtesy, integrity, and responsibility that children and staff can emulate."
+      },
+      {
+        indicator: "Anticipates problems & redirects behavior",
+        descriptor: "Spots potential disruptions early; uses positive redirection strategies to maintain order."
+      },
+      {
+        indicator: "Is flexible, responsive to children’s needs",
+        descriptor: "Adjusts plans or environment based on children’s energy, moods, or emerging interests."
+      },
+      {
+        indicator: "Is prepared for the day’s activities",
+        descriptor: "Has materials ready; reviews lesson plans; organizes transitions effectively."
+      },
+      {
+        indicator: "Handles transitions well",
+        descriptor: "Minimizes downtime or confusion when moving between activities; uses clear signals and instructions."
+      },
+      {
+        indicator: "Manages ratio coverage effectively",
+        descriptor: "Monitors child-to-adult ratios; reassigns staff if needed; ensures licensing requirements are met."
+      },
+      {
+        indicator: "Manages leaders appropriately",
+        descriptor: "Delegates tasks, provides on-the-spot guidance, and gives constructive feedback to staff."
+      },
+      {
+        indicator: "Follows all state/local licensing regulations",
+        descriptor: "Familiar with compliance requirements; keeps documentation and practices aligned with regulations."
+      },
+      {
+        indicator: "Uses opening & closing checklists",
+        descriptor: "Ensures thorough setup, cleanup, and security procedures at start/end of each day."
+      },
+      {
+        indicator: "Monitors leaders in their job duties",
+        descriptor: "Observes staff performance, intervenes to coach or correct as necessary."
+      }
+    ]
+  },
+  {
+    category: "Professionalism & Growth",
+    items: [
+      {
+        indicator: "Up to date with state mandated training",
+        descriptor: "Completes required courses/certifications on schedule; applies new learnings in daily practice."
+      },
+      {
+        indicator: "Takes job seriously",
+        descriptor: "Displays responsibility; strives for excellence rather than minimal compliance."
+      },
+      {
+        indicator: "Accepts feedback appropriately",
+        descriptor: "Listens to critiques and applies constructive changes; remains professional under challenging feedback."
+      },
+      {
+        indicator: "Seeks skill improvement",
+        descriptor: "Proactively identifies areas for self-improvement; leverages training or mentorship to develop abilities."
+      },
+      {
+        indicator: "Participates in professional growth opportunities",
+        descriptor: "Attends workshops or advanced training; implements fresh ideas to enhance program quality."
+      },
+      {
+        indicator: "Behaves in a professional manner",
+        descriptor: "Maintains composure, courtesy, and integrity; dresses and communicates per organizational standards."
+      },
+      {
+        indicator: "Actively supports the company’s philosophy",
+        descriptor: "Demonstrates alignment with mission/vision; integrates core values into daily practices."
+      },
+      {
+        indicator: "Maintains or increases enrollment",
+        descriptor: "Helps provide high-quality programming that retains families and attracts new ones; supports marketing efforts."
+      }
+    ]
+  }
+];
+
+// Ratings to populate in dropdowns
+const ratingOptions = ["Outstanding (4)", "Average (3)", "Needs Improvement (2)", "Unacceptable (1)", "N/A"];
+
+function buildForm() {
+  const container = document.getElementById("evaluation-form");
+  
+  evaluationData.forEach((section, sectionIndex) => {
+    // Create a title for the section
+    const sectionTitle = document.createElement("div");
+    sectionTitle.className = "section-title";
+    sectionTitle.textContent = section.category;
+    container.appendChild(sectionTitle);
+
+    // Create a table
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    
+    // Define columns
+    ["Performance Indicator", "Rating", "Behavioral Descriptors", "Comments / Evidence"].forEach(colTitle => {
+      const th = document.createElement("th");
+      th.textContent = colTitle;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Build table rows
+    const tbody = document.createElement("tbody");
+    section.items.forEach((item, itemIndex) => {
+      const row = document.createElement("tr");
+      
+      // 1) Performance Indicator
+      const tdIndicator = document.createElement("td");
+      tdIndicator.textContent = item.indicator;
+      row.appendChild(tdIndicator);
+
+      // 2) Rating dropdown
+      const tdRating = document.createElement("td");
+      const selectRating = document.createElement("select");
+      // Give it an ID or data attribute to reference later
+      selectRating.setAttribute("data-section-index", sectionIndex);
+      selectRating.setAttribute("data-item-index", itemIndex);
+      
+      // Add default option
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "";
+      defaultOption.textContent = "Select Rating";
+      selectRating.appendChild(defaultOption);
+
+      ratingOptions.forEach(opt => {
+        const option = document.createElement("option");
+        option.value = opt;
+        option.textContent = opt;
+        selectRating.appendChild(option);
+      });
+      tdRating.appendChild(selectRating);
+      row.appendChild(tdRating);
+      
+      // 3) Behavioral Descriptors
+      const tdDescriptor = document.createElement("td");
+      tdDescriptor.textContent = item.descriptor;
+      row.appendChild(tdDescriptor);
+
+      // 4) Comments / Evidence
+      const tdComments = document.createElement("td");
+      const textareaComments = document.createElement("textarea");
+      textareaComments.setAttribute("data-section-index", sectionIndex);
+      textareaComments.setAttribute("data-item-index", itemIndex);
+      tdComments.appendChild(textareaComments);
+      row.appendChild(tdComments);
+
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+    container.appendChild(table);
+  });
+}
+
+function generateCSV() {
+  // Grab Director Name and School from top form fields
+  const directorName = document.getElementById("directorName").value.trim();
+  const schoolName = document.getElementById("schoolName").value.trim();
+  
+  // Build CSV rows from form data
+  const headers = ["Director Name","School","Category","Performance Indicator","Rating","Behavioral Descriptors","Comments/Evidence"];
+  let csvContent = headers.join(",") + "\n";
+
+  evaluationData.forEach((section, sectionIndex) => {
+    section.items.forEach((item, itemIndex) => {
+      // Get rating from the corresponding <select>
+      const selectElem = document.querySelector(`select[data-section-index='${sectionIndex}'][data-item-index='${itemIndex}']`);
+      const ratingValue = selectElem ? selectElem.value : "";
+
+      // Get comments from the corresponding <textarea>
+      const textareaElem = document.querySelector(`textarea[data-section-index='${sectionIndex}'][data-item-index='${itemIndex}']`);
+      // Remove line breaks to avoid messing up CSV format
+      const commentsValue = textareaElem ? textareaElem.value.replace(/(\r\n|\n|\r)/gm, " ") : ""; 
+
+      // Build a row
+      const row = [
+        wrapCSV(directorName),
+        wrapCSV(schoolName),
+        wrapCSV(section.category),
+        wrapCSV(item.indicator),
+        wrapCSV(ratingValue),
+        wrapCSV(item.descriptor),
+        wrapCSV(commentsValue)
+      ].join(",");
+
+      csvContent += row + "\n";
+    });
+  });
+
+  // Create a Blob and download it
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "director_evaluation.csv");
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// Utility function to safely wrap CSV fields with quotes, handle any internal quotes/commas
+function wrapCSV(val) {
+  if (val === null || val === undefined) return "";
+  // Escape double quotes by doubling them
+  let newVal = val.replace(/"/g, '""');
+  // If value contains a comma, quote, or newline, wrap in quotes
+  if (/[",\n]/.test(newVal)) {
+    newVal = `"${newVal}"`;
+  }
+  return newVal;
+}
+
+// Build the form on page load
+document.addEventListener("DOMContentLoaded", buildForm);
+</script>
+</body>
+</html>
